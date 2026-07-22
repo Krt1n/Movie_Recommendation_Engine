@@ -1,35 +1,33 @@
-# Movie Recommendation Engine (V1)
+# Movie Recommendation Engine
 
-A custom content-based movie recommendation engine built entirely from scratch using Python, Pandas, and Scikit-Learn. The system is wrapped in a lightweight Flask web server, providing a clean API to interact with the engine.
-
-## Overview
-
-This project (Version 1) analyzes a dataset of 5,000 movies to find similarities based on multiple features:
-- **Keywords**
-- **Cast**
-- **Genres**
-- **Director**
-
-Instead of relying on external API recommendation engines, this project implements its own mathematical engine using **Cosine Similarity**. 
-
-## How It Works
-
-1. **Data Ingestion:** The engine loads a local `movie_dataset.csv`.
-2. **Feature Engineering:** Missing `NaN` values are sanitized, and the selected text features (cast, crew, keywords, genres) are concatenated into a single "combined_features" string for every movie.
-3. **Vectorization:** A `CountVectorizer` converts these massive text strings into a mathematical sparse matrix of word frequencies.
-4. **Similarity Pre-calculation:** The Flask server uses `cosine_similarity` to pre-calculate a massive $5000 \times 5000$ similarity matrix the moment the server boots up. This caches the math in RAM.
-5. **API Lookups:** When a user searches for a movie via the web interface, the server performs an $O(1)$ lookup in the pre-calculated matrix and returns the top 10 most similar titles instantly via a JSON API.
+This project is a content-based movie recommendation system. It processes a dataset of 5,000 movies and recommends similar titles based on shared features like cast, crew, keywords, and genres. The backend is built with Python and serves an API using Flask, while the frontend is a vanilla JavaScript and CSS application that queries the API.
 
 ## Project Structure
 
-* `app.py`: The Flask web server and API routes. Contains the core logic for the recommendation engine.
-* `recommender.ipynb` & `consine_similarity.ipynb`: Jupyter notebooks used for prototyping the math and logic before moving it to production in the server.
-* `app_explanation.md`: Detailed documentation explaining the Python syntax and Flask routing logic used in the server.
-* `static/`: Contains the frontend web UI (HTML, CSS, JS) that interacts with the Flask API.
+```text
+.
+├── app.py
+├── app_explanation.md
+├── movie_dataset.csv
+├── requirements.txt
+└── static/
+    ├── index.html
+    ├── script.js
+    └── style.css
+```
 
-## Running the Project locally
+The [`static/`](./static/) directory contains the frontend assets for the web application. The backend serves these files directly. The [`app.py`](./app.py) file serves as the entry point for the Flask server and holds the recommendation engine logic.
 
-1. Ensure you have Python installed.
-2. Install the required dependencies: `pip install -r requirements.txt` (Make sure pandas, scikit-learn, and flask are installed).
-3. Run the server: `python app.py`
-4. Open your web browser and navigate to `http://localhost:5000` to interact with the UI.
+## Techniques
+
+* **CSS Custom Properties (Variables):** The frontend relies on [CSS Variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties) to manage themes and global colors efficiently across the application.
+* **Asynchronous Fetch:** The client application uses the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) with `async/await` syntax to make non-blocking HTTP GET requests to the Flask backend. 
+* **Pre-computed Similarity Matrix:** To optimize response times, the backend calculates the mathematical similarities between all movies during server startup rather than on each request. The API endpoint performs a direct $O(1)$ lookup against this matrix in memory.
+
+## Libraries and Technologies
+
+* **[Flask](https://flask.palletsprojects.com/):** A lightweight WSGI web application framework used to handle routing and serve the JSON API endpoint.
+* **[Pandas](https://pandas.pydata.org/):** Used for loading and sanitizing the CSV dataset. It handles missing `NaN` values and concatenates the text features efficiently.
+* **[Scikit-learn (CountVectorizer)](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html):** Converts the raw text of movie features into a sparse matrix of word counts, turning unstructured text into structured data.
+* **[Scikit-learn (cosine_similarity)](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.cosine_similarity.html):** Calculates the cosine angle between the feature vectors. This measures how similar two movies are regardless of the total amount of text in their descriptions.
+* **[Outfit Font](https://fonts.google.com/specimen/Outfit):** The UI typography utilizes the Outfit font family loaded via Google Fonts.
