@@ -1,0 +1,27 @@
+# Large datasets (exceeds GitHub's 100MB limit)
+*.csv
+movies_dataset_1M.csv
+movie_dataset.csv
+
+# Pre-computed binary cache files (auto-generated on boot)
+*.parquet
+*.npz
+movies_cache.parquet
+count_matrix.npz
+*.tmp*
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+.env
+.env.*
+venv/
+.venv/
+*.log
+
+# Kaggle API keys, credentials & tokens (NEVER push to GitHub!)
+kaggle.json
+*kaggle*.json
+access_token
+*access_token*
+.kaggle/

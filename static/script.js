@@ -6,8 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchedMovieSpan = document.getElementById('searched-movie');
     const recommendationsGrid = document.getElementById('recommendations-grid');
     const loading = document.getElementById('loading');
+    const loadingText = loading ? loading.querySelector('p') : null;
 
-    const searchMovie = async () => {
+    const searchMovie = async (retryCount = 0) => {
         const query = searchInput.value.trim();
         if (!query) {
             showError('Please enter a movie name.');
@@ -18,14 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
         hideError();
         resultsSection.classList.add('hidden');
         loading.classList.remove('hidden');
+        if (loadingText) loadingText.textContent = 'Analyzing movies...';
         recommendationsGrid.innerHTML = '';
 
         try {
             const response = await fetch(`/api/recommend?movie=${encodeURIComponent(query)}`);
             const data = await response.json();
 
+            // Handle live catalog update during Drain & Swap (HTTP 503)
+            if (response.status === 503 && data.status === 'updating' && retryCount < 3) {
+                if (loadingText) loadingText.textContent = 'Updating movie catalog with latest releases...';
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                return searchMovie(retryCount + 1);
+            }
+
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to fetch recommendations.');
+                throw new Error(data.error || data.message || 'Failed to fetch recommendations.');
             }
 
             displayRecommendations(data.movie, data.recommendations);
@@ -33,27 +42,36 @@ document.addEventListener('DOMContentLoaded', () => {
             showError(err.message);
         } finally {
             loading.classList.add('hidden');
+            if (loadingText) loadingText.textContent = 'Analyzing movies...';
         }
     };
 
     const displayRecommendations = (movieName, recommendations) => {
         searchedMovieSpan.textContent = movieName;
         
-        recommendations.forEach((movie, index) => {
+        recommendations.forEach((movieObj, index) => {
             const card = document.createElement('div');
             card.className = 'movie-card';
             card.style.animationDelay = `${index * 0.05}s`;
             
+            if (movieObj.poster_path) {
+                const img = document.createElement('img');
+                img.src = `https://image.tmdb.org/t/p/w500${movieObj.poster_path}`;
+                img.alt = `${movieObj.title} Poster`;
+                img.className = 'movie-poster';
+                card.appendChild(img);
+            }
+            
             const title = document.createElement('span');
             title.className = 'movie-title';
-            title.textContent = movie;
+            title.textContent = movieObj.title;
             
             card.appendChild(title);
             recommendationsGrid.appendChild(card);
             
             // Add click listener to search this recommendation
             card.addEventListener('click', () => {
-                searchInput.value = movie;
+                searchInput.value = movieObj.title;
                 searchMovie();
             });
         });
@@ -71,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Event listeners
-    searchBtn.addEventListener('click', searchMovie);
+    searchBtn.addEventListener('click', () => searchMovie());
     
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
